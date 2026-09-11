@@ -103,6 +103,37 @@ part of this repo is built around not letting that happen quietly:
   the model's own combined malignant-class probability mass before letting
   a case drop to the "low" tier (`triage/risk_engine.py`).
 
+## Evaluation results
+
+Numbers below are from the current ResNet18 checkpoint
+(`checkpoints/resnet18_best.pt`) on the held-out **test** split
+(1,494 images), as produced by `evaluation/evaluate.py` and stored in
+[`evaluation/reports/metrics.json`](evaluation/reports/metrics.json). Overall
+top-1 accuracy is **74.4%**, but accuracy is the least important line here —
+see the per-class and malignant-vs-benign figures.
+
+| Class | Precision | Recall | ROC-AUC | Support |
+|---|---:|---:|---:|---:|
+| `akiec` — Actinic keratoses / intraepithelial carcinoma | 58.5% | 60.3% | 0.943 | 63 |
+| `bcc` — Basal cell carcinoma | 56.6% | 82.4% | 0.981 | 68 |
+| `bkl` — Benign keratosis-like lesions | 53.0% | 57.2% | 0.905 | 152 |
+| `df` — Dermatofibroma | 25.0% | 71.4% | 0.965 | 7 |
+| `mel` — **Melanoma** | 42.7% | 73.3% | 0.887 | 187 |
+| `nv` — Melanocytic nevi (benign) | 96.5% | 77.1% | 0.946 | 996 |
+| `vasc` — Vascular lesions | 72.4% | 100.0% | 0.999 | 21 |
+
+Macro-average recall — the metric the training loop selects the checkpoint on —
+is **74.5%**; weighted-average precision is 81.2%.
+
+**Malignant-vs-benign (the headline safety metric):** recall **80.8%**,
+precision **53.0%**. In plain terms: the model flags ~81% of truly malignant
+lesions as malignant, but only ~53% of the lesions it flags as malignant
+actually are — it deliberately over-refers rather than miss dangerous cases,
+which is the correct bias for a triage aid but means clinicians will review a
+substantial number of false positives. Melanoma (`mel`) specifically is caught
+at 73.3% recall with 42.7% precision and the lowest per-class AUC (0.887), so a
+missed melanoma is a real and quantified failure mode, not a hypothetical one.
+
 ## Explainability
 
 Every prediction can be paired with a Grad-CAM heatmap

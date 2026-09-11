@@ -58,6 +58,38 @@ human review step and this system's safety case falls apart entirely.
   not a clinical staging system, and several classes (e.g. `bkl`) contain
   a spectrum of lesions that isn't fully captured by a binary bucket.
 
+## Measured weak spots of the current checkpoint (test split)
+
+These are not hypothetical — they are the numbers the shipped
+`checkpoints/resnet18_best.pt` actually produced on the held-out test split
+(1,494 images), recorded in `evaluation/reports/metrics.json`. They will change
+if the model is retrained, but for *this* checkpoint they are the honest bounds:
+
+- **Melanoma (`mel`) is the weakest class where it matters most.** Recall is
+  **73.3%** — meaning roughly **1 in 4 melanomas is not top-1 classified as
+  melanoma** — precision is only 42.7%, and its ROC-AUC (**0.887**) is the
+  **lowest of all seven classes**. The malignant-vs-benign grouping recovers
+  some of this (80.8% recall on the combined malignant bucket, which is why the
+  triage tiering looks at combined malignant probability mass rather than the
+  top-1 label), but no one should read this model as reliably catching every
+  melanoma. A missed melanoma is the exact failure mode this design exists to
+  reduce, and it is a measured, non-trivial rate here — not something the
+  numbers let us wave away.
+- **`akiec` (actinic keratoses / intraepithelial carcinoma), also on the
+  malignant spectrum, is under-caught:** recall **60.3%**, precision 58.5%.
+- **`bkl` (benign keratosis-like lesions) is the most confused class overall:**
+  recall **57.2%** and AUC **0.905**, the second-lowest AUC. It is benign, so
+  the *safety* cost of confusing it is lower, but it drags down overall
+  precision for the malignant classes it gets mixed up with.
+- **`df` (dermatofibroma) has only 7 test images**, so its reported precision
+  (25%) and recall (71.4%) are too small-sample to trust as stable estimates —
+  treat that row as essentially unmeasured rather than as a real 25% precision.
+
+The headline top-1 accuracy (74.4%) is therefore genuinely misleading if read
+alone: it is propped up by the large, easy `nv` class (96.5% precision) while
+the classes a clinician most needs caught are exactly the ones with the weakest
+recall and AUC above.
+
 ## What would be needed before this could touch a real clinical workflow
 
 This list is intentionally long — it's meant to show why "it prioritizes
