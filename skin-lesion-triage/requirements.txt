@@ -1,0 +1,22 @@
+# Core
+torch>=2.1.0
+torchvision>=0.16.0
+numpy>=1.24
+pandas>=2.0
+scikit-learn>=1.3
+Pillow>=10.0
+opencv-python-headless>=4.8
+matplotlib>=3.7
+
+# Dashboard
+streamlit>=1.32
+
+# Optional cloud backends — uncomment the ones you deploy with
+# firebase-admin>=6.5      # for STORAGE_BACKEND=firebase / DB_BACKEND=firestore
+# boto3>=1.34              # for STORAGE_BACKEND=s3 / DB_BACKEND=dynamodb
+
+# Dataset download
+# kaggle>=1.6              # for data/download_data.py --source kaggle
+
+# Testing
+pytest>=7.4

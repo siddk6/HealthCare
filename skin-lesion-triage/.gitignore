@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# Dataset (download it yourself via data/download_data.py — don't commit it)
+data_raw/
+data_processed/
+
+# Trained weights (large; regenerate via training/train.py)
+checkpoints/
+
+# Local stand-ins for the cloud backends — never commit demo/user data
+local_cloud_storage/
+local_cloud_db.sqlite3
+
+# Evaluation artifacts (regenerate via evaluation/evaluate.py)
+evaluation/reports/
+
+.DS_Store
