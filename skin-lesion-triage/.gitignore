@@ -19,3 +19,5 @@ local_cloud_db.sqlite3
 evaluation/reports/
 
 .DS_Store
+
+.agents/
