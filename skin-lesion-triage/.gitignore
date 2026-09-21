@@ -18,6 +18,13 @@ local_cloud_db.sqlite3
 # Evaluation artifacts (regenerate via evaluation/evaluate.py)
 evaluation/reports/
 
+# Cloud credentials — NEVER commit a service-account key or secrets
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+secrets/
+.env
+.env.*
+
 .DS_Store
 
 .agents/

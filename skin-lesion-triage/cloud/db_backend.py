@@ -173,9 +173,13 @@ class FirestoreDBBackend(DBBackend):
         self.db.collection(self.COLLECTION).document(case_id).update(updates)
 
     def list_cases(self, status: Optional[str] = None) -> list:
+        from firebase_admin import firestore
+
         query = self.db.collection(self.COLLECTION)
         if status:
-            query = query.where("status", "==", status)
+            # Keyword `filter=FieldFilter(...)`; the positional .where("f","==",v)
+            # form is deprecated in google-cloud-firestore and warns/breaks.
+            query = query.where(filter=firestore.FieldFilter("status", "==", status))
         return [doc.to_dict() for doc in query.stream()]
 
 
