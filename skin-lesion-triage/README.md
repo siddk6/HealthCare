@@ -54,6 +54,36 @@ This is what makes the architecture claim ("cloud-based triage queue") real
 rather than aspirational: the interface is the same whether you're running
 it on a laptop for a demo or pointed at production Firebase/AWS.
 
+### Verified setup: Firestore database, no billing required
+
+The storage and database backends are independent env vars, so you can mix
+them. The tested, zero-cost configuration is **Firestore for the case database
++ local disk for images**:
+
+```bash
+export STORAGE_BACKEND=local          # images stay on disk (no bucket needed)
+export DB_BACKEND=firestore           # case records live in the cloud
+export FIREBASE_CREDENTIALS_JSON=/path/to/serviceAccountKey.json
+```
+
+This runs on Firebase's free **Spark** plan — Firestore has a no-cost tier,
+and by keeping images local you avoid Cloud Storage for Firebase, which now
+requires the paid **Blaze** plan just to create a bucket. Case records
+(prediction, confidence, class probabilities, risk tier, reviewer decisions)
+are written to and read back from the `triage_cases` Firestore collection;
+this full round-trip — real image → ResNet18 inference → risk tiering →
+Firestore write → dashboard read — has been run end to end against a live
+project. Note the Admin SDK (service account) bypasses Firestore security
+rules, so **"production mode" rules are correct** and no client-side rules
+need loosening.
+
+If you do want fully-cloud image storage, enable Blaze and set
+`STORAGE_BACKEND=firebase` with `FIREBASE_STORAGE_BUCKET` (newer projects use
+`your-project.firebasestorage.app`, older ones `your-project.appspot.com` —
+use whatever the Storage page shows). Keep the service-account key out of the
+repo; `.gitignore` already excludes `*serviceAccount*.json`, `*-firebase-adminsdk-*.json`,
+and `.env` files.
+
 ## Full pipeline, in order (matches the 7-day plan)
 
 | Day | What | Where |
