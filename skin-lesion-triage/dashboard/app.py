@@ -84,6 +84,21 @@ def get_backends():
 model = load_model()
 storage, db = get_backends()
 
+
+@st.cache_data(show_spinner=False)
+def gradcam_overlay_for(case_id: str, image_ref: str):
+    """Regenerate the Grad-CAM overlay for a stored case on demand.
+
+    The overlay isn't persisted with the case record (only the prediction is),
+    so for cases shown in the queue we re-run the scorer on the stored image.
+    Cached by case_id so it's computed once per case, not on every rerun.
+    """
+    suffix = Path(image_ref).suffix or ".jpg"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        local_img = storage.download(image_ref, tmp.name)
+    pil = Image.open(local_img).convert("RGB")
+    return model.predict(pil)["gradcam_overlay"]
+
 if getattr(model, "is_demo", False):
     st.warning(
         "⚠️ DEMO MODE — no trained checkpoint found in `checkpoints/`. Predictions below are "
@@ -173,6 +188,16 @@ with tab_queue:
                     st.image(img_url, caption="Original image", use_container_width=True)
                 except Exception:
                     st.caption("(image preview unavailable for this storage backend)")
+
+                # Grad-CAM heatmap — regenerated on demand (not persisted with the case)
+                try:
+                    overlay = gradcam_overlay_for(case["case_id"], case["image_ref"])
+                    cam_caption = "Grad-CAM: where the model looked"
+                    if getattr(model, "is_demo", False):
+                        cam_caption += " (DEMO — synthetic tint, not a real heatmap)"
+                    st.image(overlay, caption=cam_caption, use_container_width=True)
+                except Exception as e:
+                    st.caption(f"(Grad-CAM unavailable: {e})")
 
             with col2:
                 st.write("**Confidence breakdown**")
